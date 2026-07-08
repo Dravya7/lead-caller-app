@@ -1,4 +1,4 @@
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXISTS employees (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
   email TEXT UNIQUE,
@@ -6,14 +6,14 @@ CREATE TABLE employees (
   role TEXT DEFAULT 'employee' -- 'employee' or 'manager'
 );
 
-CREATE TABLE upload_batches (
+CREATE TABLE IF NOT EXISTS upload_batches (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   uploaded_by INTEGER REFERENCES employees(id),
   filename TEXT,
   uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE leads (
+CREATE TABLE IF NOT EXISTS leads (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   batch_id INTEGER REFERENCES upload_batches(id),
   employee_id INTEGER REFERENCES employees(id),
@@ -26,7 +26,7 @@ CREATE TABLE leads (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE call_logs (
+CREATE TABLE IF NOT EXISTS call_logs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   lead_id INTEGER REFERENCES leads(id),
   employee_id INTEGER REFERENCES employees(id),
