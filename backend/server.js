@@ -69,12 +69,12 @@ app.post('/api/upload', authMiddleware, upload.single('file'), async (req, res) 
     const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
     let count = 0;
     for (const row of rows) {
-      const name = row.Name || row.name || row.Customer || '';
-      const phone = row.Phone || row.phone || row.Number || row.Mobile || '';
-      if (!phone) continue;
+      const name = row.Name || row.name || row.Customer || row.id || '';
+      const phone = row['Phone Number'] || row.Phone || row.phone || row.Number || row.Mobile || '';
+      if (!name && !phone) continue;
       await db.execute({
         sql: `INSERT INTO leads (batch_id, employee_id, customer_name, phone_number, extra_data) VALUES (?, ?, ?, ?, ?)`,
-        args: [batchId, emp.id, name, String(phone), JSON.stringify(row)],
+        args: [batchId, emp.id, name, String(phone || 'TO_BE_FETCHED'), JSON.stringify(row)],
       });
       count++;
     }
