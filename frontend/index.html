@@ -2,63 +2,324 @@
 <html>
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>Lead Caller</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <style>
+  :root {
+    --bg: #F3F4F8;
+    --surface: #FFFFFF;
+    --primary: #1D2B53;
+    --primary-light: #33427A;
+    --accent: #F2A93B;
+    --accent-dark: #D98F1F;
+    --success: #0E9E88;
+    --success-bg: #E4F7F3;
+    --warning: #F2A93B;
+    --warning-bg: #FEF3E1;
+    --danger: #E0575B;
+    --danger-bg: #FCE9EA;
+    --info: #3E7BFA;
+    --info-bg: #EAF0FE;
+    --text: #1E2438;
+    --text-muted: #6B7280;
+    --border: #E4E6EE;
+  }
   * { box-sizing: border-box; }
-  body { font-family: system-ui, sans-serif; background:#f5f5f5; margin:0; -webkit-tap-highlight-color: transparent; }
-  .container { max-width: 900px; margin: 0 auto; padding: 16px; }
-  .lead-card { background:white; border-radius:10px; padding:14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
-  .lead-top { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
-  .phone-link { font-weight:700; font-size:20px; text-decoration:none; padding:10px 14px; border-radius:8px; display:inline-block; min-height:44px; line-height:24px; }
-  .phone-link.not_called { color:#1976d2; background:#e3f2fd; }
-  .phone-link.called { color:#2e7d32; background:#e8f5e9; }
-  .phone-link.callback { color:#ef6c00; background:#fff3e0; }
-  .phone-link.interested { color:#1565c0; background:#e1f5fe; }
-  .phone-link.rejected { color:#c62828; background:#ffebee; }
-  .customer-name { font-size:14px; color:#555; margin-top:4px; }
-  .lead-controls { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-  select, input, button { padding:10px 12px; border-radius:8px; border:1px solid #ccc; font-size:15px; min-height:44px; }
-  select, input { flex:1; min-width:120px; }
-  button { background:#1976d2; color:white; border:none; cursor:pointer; min-width:100px; }
-  .login-box { max-width:340px; margin:60px auto; background:white; padding:24px; border-radius:10px; }
-  .login-box input { width:100%; margin-bottom:10px; }
-  .login-box button { width:100%; }
-  h2, h3 { padding: 0 4px; }
-  @media (max-width: 480px) {
-    .container { padding: 10px; }
-    .phone-link { font-size:18px; width:100%; text-align:center; }
-    .lead-controls { flex-direction:column; }
-    select, input, button { width:100%; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    margin: 0;
+    color: var(--text);
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1, h2, h3, .display { font-family: 'Space Grotesk', system-ui, sans-serif; }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    background: var(--primary);
+    color: white;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk'; font-weight: 700; color: var(--primary); font-size: 16px;
+  }
+  .brand-name { font-family: 'Space Grotesk'; font-weight: 600; font-size: 17px; letter-spacing: -0.2px; }
+  .user-chip { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%; background: var(--accent);
+    color: var(--primary); display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; font-family: 'Space Grotesk';
+  }
+  .user-name { font-size: 14px; font-weight: 500; opacity: 0.95; }
+  .logout-btn {
+    background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2);
+    padding: 7px 14px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,0.2); }
+
+  .container { max-width: 1000px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  /* ---------- Login ---------- */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--primary); padding: 20px; }
+  .login-card { background: var(--surface); width: 100%; max-width: 380px; border-radius: 16px; padding: 36px 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); }
+  .login-mark { width: 48px; height: 48px; border-radius: 12px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk'; font-weight: 700; color: var(--primary); font-size: 22px; margin-bottom: 18px; }
+  .login-card h2 { margin: 0 0 4px; font-size: 22px; }
+  .login-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
+  .field-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.4px; }
+  .login-card input {
+    width: 100%; padding: 12px 14px; border-radius: 9px; border: 1.5px solid var(--border);
+    font-size: 14px; margin-bottom: 16px; font-family: 'Inter'; background: var(--bg);
+  }
+  .login-card input:focus { outline: none; border-color: var(--primary); background: white; }
+  .primary-btn {
+    width: 100%; background: var(--primary); color: white; border: none; padding: 13px;
+    border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .primary-btn:hover { background: var(--primary-light); }
+  .primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .login-error { background: var(--danger-bg); color: var(--danger); padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+
+  /* ---------- Spinner ---------- */
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  .spinner-dark { border: 2px solid rgba(29,43,83,0.15); border-top-color: var(--primary); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .page-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; color: var(--text-muted); gap: 14px; }
+  .page-loading .spinner { width: 26px; height: 26px; border-width: 3px; }
+
+  /* ---------- Greeting / momentum ring ---------- */
+  .greeting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 16px; }
+  .greeting h1 { font-size: 24px; margin: 0 0 4px; }
+  .greeting p { margin: 0; color: var(--text-muted); font-size: 13px; }
+  .ring-wrap { display: flex; align-items: center; gap: 12px; background: var(--surface); padding: 10px 16px 10px 10px; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .ring-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+  .ring-value { font-family: 'Space Grotesk'; font-size: 18px; font-weight: 700; color: var(--primary); }
+
+  /* ---------- Stat cards ---------- */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .stat-num { font-family: 'Space Grotesk'; font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+  .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .stat-card.total .stat-num { color: var(--primary); }
+  .stat-card.called .stat-num { color: var(--success); }
+  .stat-card.pending .stat-num { color: var(--info); }
+  .stat-card.followup .stat-num { color: var(--warning); }
+
+  /* ---------- Section card ---------- */
+  .section-card { background: var(--surface); border-radius: 14px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .section-title { font-size: 15px; font-weight: 700; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+  .section-title .count-pill { background: var(--bg); color: var(--text-muted); font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; font-family: 'Inter'; }
+
+  /* ---------- Filter tabs ---------- */
+  .filter-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-tab {
+    padding: 7px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--surface); color: var(--text-muted);
+  }
+  .filter-tab.active { background: var(--primary); border-color: var(--primary); color: white; }
+
+  /* ---------- Lead cards ---------- */
+  .lead-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; transition: box-shadow 0.15s; }
+  .lead-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+  .lead-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  .phone-link {
+    font-weight: 700; font-size: 18px; text-decoration: none; padding: 9px 14px; border-radius: 9px;
+    display: inline-flex; align-items: center; gap: 8px; min-height: 42px; font-family: 'Space Grotesk';
+  }
+  .phone-link.not_called { color: var(--info); background: var(--info-bg); }
+  .phone-link.called { color: var(--success); background: var(--success-bg); }
+  .phone-link.callback { color: var(--warning); background: var(--warning-bg); }
+  .phone-link.interested { color: #1565c0; background: #e1f5fe; }
+  .phone-link.rejected { color: var(--danger); background: var(--danger-bg); }
+  .phone-link.pending-number { color: var(--text-muted); background: var(--bg); cursor: default; pointer-events: none; }
+  .status-badge { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 3px 9px; border-radius: 20px; }
+  .status-badge.not_called { color: var(--info); background: var(--info-bg); }
+  .status-badge.called { color: var(--success); background: var(--success-bg); }
+  .status-badge.callback { color: var(--warning); background: var(--warning-bg); }
+  .status-badge.interested { color: #1565c0; background: #e1f5fe; }
+  .status-badge.rejected { color: var(--danger); background: var(--danger-bg); }
+  .customer-name { font-size: 13.5px; color: var(--text-muted); margin: 8px 0 0; }
+  .lead-controls { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  select, input.control-input {
+    padding: 9px 11px; border-radius: 8px; border: 1.5px solid var(--border); font-size: 13.5px;
+    min-height: 40px; font-family: 'Inter'; background: var(--bg);
+  }
+  select { flex: 1; min-width: 130px; }
+  input.control-input { flex: 2; min-width: 140px; }
+  select:focus, input.control-input:focus { outline: none; border-color: var(--primary); background: white; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-state .emoji { font-size: 32px; margin-bottom: 10px; }
+
+  /* ---------- Buttons ---------- */
+  .btn { border: none; border-radius: 9px; padding: 11px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-accent { background: var(--accent); color: var(--primary); }
+  .btn-accent:hover { background: var(--accent-dark); color: white; }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+  .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* ---------- Manager forms ---------- */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-grid input, .form-grid select {
+    padding: 10px 12px; border-radius: 8px; border: 1.5px solid var(--border); font-size: 13.5px;
+    font-family: 'Inter'; background: var(--bg);
+  }
+  .form-grid input:focus, .form-grid select:focus { outline: none; border-color: var(--primary); background: white; }
+  .file-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .file-row input[type=file] { font-size: 13px; flex: 1; min-width: 200px; }
+  .toast { padding: 10px 14px; border-radius: 9px; font-size: 13px; margin-top: 10px; }
+  .toast.success { background: var(--success-bg); color: var(--success); }
+  .toast.error { background: var(--danger-bg); color: var(--danger); }
+  .upload-summary { margin-top: 12px; }
+  .upload-row { display: flex; justify-content: space-between; padding: 8px 12px; border-radius: 8px; background: var(--bg); font-size: 13px; margin-bottom: 6px; }
+  .upload-row .ok { color: var(--success); font-weight: 600; }
+  .upload-row .warn { color: var(--danger); font-weight: 600; }
+
+  .emp-table-row { display: grid; grid-template-columns: 1.4fr 1.6fr 1fr; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 9px; font-size: 13.5px; }
+  .emp-table-row:nth-child(even) { background: var(--bg); }
+  .emp-table-header { font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); font-weight: 700; padding: 0 12px 6px; }
+
+  @media (max-width: 640px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .greeting-row { flex-direction: column; align-items: flex-start; }
+    .lead-controls { flex-direction: column; }
+    select, input.control-input { width: 100%; }
+    .emp-table-row { grid-template-columns: 1fr; gap: 2px; }
   }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect } = React;
-// IMPORTANT: after deploying your backend (Render/Fly/etc.), replace the URL below
-// with your live backend URL, e.g. 'https://lead-caller-backend.onrender.com/api'
+const { useState, useEffect, useMemo } = React;
+
+// IMPORTANT: replace with your real backend URL, e.g. https://lead-caller-app.onrender.com/api
 const API = 'https://lead-caller-app.onrender.com/api';
+
+const STATUS_META = {
+  not_called: { label: 'Not Called' },
+  called: { label: 'Called' },
+  callback: { label: 'Callback' },
+  interested: { label: 'Interested' },
+  rejected: { label: 'Rejected' },
+};
+
+function initials(name) {
+  return (name || '?').trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+}
+
+function Spinner({ dark }) {
+  return <div className={`spinner ${dark ? 'spinner-dark' : ''}`}></div>;
+}
+
+function TopBar({ user, onLogout }) {
+  return (
+    <div className="topbar">
+      <div className="brand">
+        <div className="brand-mark">L</div>
+        <div className="brand-name">Lead Caller</div>
+      </div>
+      <div className="user-chip">
+        <div className="avatar">{initials(user.name)}</div>
+        <div className="user-name">{user.name}</div>
+        <button className="logout-btn" onClick={onLogout}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Log out
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const submit = async () => {
-    const res = await fetch(`${API}/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
-    const data = await res.json();
-    if (data.token) onLogin(data);
-    else alert(data.error);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError(''); setLoading(true);
+    try {
+      const res = await fetch(`${API}/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+      const data = await res.json();
+      if (data.token) onLogin(data);
+      else setError(data.error || 'Login failed');
+    } catch {
+      setError('Could not reach the server. Check your connection.');
+    }
+    setLoading(false);
   };
+
   return (
-    <div className="login-box">
-      <h2>Login</h2>
-      <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} style={{width:'100%', marginBottom:8}} />
-      <input placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} style={{width:'100%', marginBottom:8}} />
-      <button onClick={submit} style={{width:'100%'}}>Login</button>
+    <div className="login-wrap">
+      <form className="login-card" onSubmit={submit}>
+        <div className="login-mark">L</div>
+        <h2>Welcome back</h2>
+        <div className="login-sub">Log in to your Lead Caller account</div>
+        {error && <div className="login-error">{error}</div>}
+        <label className="field-label">Email</label>
+        <input placeholder="you@company.com" value={email} onChange={e=>setEmail(e.target.value)} type="email" required />
+        <label className="field-label">Password</label>
+        <input placeholder="••••••••" type="password" value={password} onChange={e=>setPassword(e.target.value)} required />
+        <button className="primary-btn" disabled={loading}>
+          {loading && <Spinner />} {loading ? 'Logging in…' : 'Log in'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function StatCards({ leads }) {
+  const total = leads.length;
+  const called = leads.filter(l => l.status === 'called' || l.status === 'interested').length;
+  const pending = leads.filter(l => l.status === 'not_called').length;
+  const followup = leads.filter(l => l.status === 'callback').length;
+  return (
+    <div className="stats-grid">
+      <div className="stat-card total"><div className="stat-num">{total}</div><div className="stat-label">Total Leads</div></div>
+      <div className="stat-card called"><div className="stat-num">{called}</div><div className="stat-label">Called</div></div>
+      <div className="stat-card pending"><div className="stat-num">{pending}</div><div className="stat-label">Not Called Yet</div></div>
+      <div className="stat-card followup"><div className="stat-num">{followup}</div><div className="stat-label">Callbacks</div></div>
+    </div>
+  );
+}
+
+function MomentumRing({ leads }) {
+  const total = leads.length || 1;
+  const called = leads.filter(l => l.status !== 'not_called').length;
+  const pct = Math.round((called / total) * 100);
+  const r = 22, c = 2 * Math.PI * r;
+  return (
+    <div className="ring-wrap">
+      <svg width="56" height="56" viewBox="0 0 56 56">
+        <circle cx="28" cy="28" r={r} fill="none" stroke="#E4E6EE" strokeWidth="6" />
+        <circle cx="28" cy="28" r={r} fill="none" stroke="#F2A93B" strokeWidth="6"
+          strokeDasharray={c} strokeDashoffset={c - (pct/100)*c} strokeLinecap="round"
+          transform="rotate(-90 28 28)" />
+      </svg>
+      <div>
+        <div className="ring-label">Today's progress</div>
+        <div className="ring-value">{pct}%</div>
+      </div>
     </div>
   );
 }
@@ -66,43 +327,44 @@ function Login({ onLogin }) {
 function LeadCard({ lead, token, refresh }) {
   const [reason, setReason] = useState(lead.call_reason || '');
   const [status, setStatus] = useState(lead.status);
+  const [saving, setSaving] = useState(false);
+  const isPendingNumber = lead.phone_number === 'TO_BE_FETCHED';
 
   const save = async (newStatus, newReason) => {
+    setSaving(true);
     setStatus(newStatus);
     await fetch(`${API}/leads/${lead.id}/call`, {
       method:'POST', headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
       body: JSON.stringify({ status: newStatus, reason: newReason ?? reason })
     });
+    setSaving(false);
     refresh();
   };
 
-  // Tapping the number opens the phone's native dialer (works on iOS & Android).
-  // As soon as they tap to call, mark it as "called" so the color updates immediately.
   const handleCallClick = () => {
+    if (isPendingNumber) return;
     if (status === 'not_called') save('called', reason);
   };
 
   return (
     <div className="lead-card">
       <div className="lead-top">
-        <a
-          href={`tel:${lead.phone_number}`}
-          className={`phone-link ${status}`}
-          onClick={handleCallClick}
-        >
-          📞 {lead.phone_number}
-        </a>
+        {isPendingNumber ? (
+          <span className="phone-link pending-number">⏳ Number pending</span>
+        ) : (
+          <a href={`tel:${lead.phone_number}`} className={`phone-link ${status}`} onClick={handleCallClick}>
+            📞 {lead.phone_number}
+          </a>
+        )}
+        <span className={`status-badge ${status}`}>{STATUS_META[status]?.label || status}</span>
       </div>
-      <div className="customer-name">{lead.customer_name}</div>
+      {lead.customer_name && <div className="customer-name">{lead.customer_name}</div>}
       <div className="lead-controls">
-        <select value={status} onChange={e=>save(e.target.value, reason)}>
-          <option value="not_called">Not Called</option>
-          <option value="called">Called</option>
-          <option value="callback">Callback</option>
-          <option value="interested">Interested</option>
-          <option value="rejected">Rejected</option>
+        <select value={status} onChange={e=>save(e.target.value, reason)} disabled={saving}>
+          {Object.entries(STATUS_META).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
-        <input placeholder="Reason/notes" value={reason} onChange={e=>setReason(e.target.value)} onBlur={()=>save(status, reason)} />
+        <input className="control-input" placeholder="Reason / notes" value={reason} onChange={e=>setReason(e.target.value)} onBlur={()=>save(status, reason)} disabled={saving} />
+        {saving && <Spinner dark />}
       </div>
     </div>
   );
@@ -110,13 +372,47 @@ function LeadCard({ lead, token, refresh }) {
 
 function EmployeeDashboard({ user, token }) {
   const [leads, setLeads] = useState([]);
-  const fetchLeads = () => fetch(`${API}/leads`, { headers:{ Authorization:`Bearer ${token}` }})
-    .then(r=>r.json()).then(setLeads);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+
+  const fetchLeads = () => {
+    fetch(`${API}/leads`, { headers:{ Authorization:`Bearer ${token}` }})
+      .then(r=>r.json()).then(data => { setLeads(Array.isArray(data) ? data : []); setLoading(false); });
+  };
   useEffect(fetchLeads, []);
+
+  const filtered = useMemo(() => filter === 'all' ? leads : leads.filter(l => l.status === filter), [leads, filter]);
+
+  if (loading) return <div className="page-loading"><Spinner dark /><div>Loading your leads…</div></div>;
+
   return (
     <div className="container">
-      <h2>Welcome, {user.name}</h2>
-      {leads.map(l => <LeadCard key={l.id} lead={l} token={token} refresh={fetchLeads} />)}
+      <div className="greeting-row">
+        <div className="greeting">
+          <h1>Welcome, {user.name}</h1>
+          <p>{leads.length} lead{leads.length !== 1 ? 's' : ''} assigned to you</p>
+        </div>
+        <MomentumRing leads={leads} />
+      </div>
+
+      <StatCards leads={leads} />
+
+      <div className="section-card">
+        <div className="section-title">Your Leads <span className="count-pill">{filtered.length}</span></div>
+        <div className="filter-tabs">
+          {['all', 'not_called', 'called', 'callback', 'interested', 'rejected'].map(f => (
+            <div key={f} className={`filter-tab ${filter === f ? 'active' : ''}`} onClick={()=>setFilter(f)}>
+              {f === 'all' ? 'All' : STATUS_META[f].label}
+            </div>
+          ))}
+        </div>
+        {filtered.length === 0 ? (
+          <div className="empty-state">
+            <div className="emoji">📭</div>
+            <div>No leads in this view yet.</div>
+          </div>
+        ) : filtered.map(l => <LeadCard key={l.id} lead={l} token={token} refresh={fetchLeads} />)}
+      </div>
     </div>
   );
 }
@@ -126,87 +422,193 @@ function AddEmployeeForm({ token, onAdded }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('employee');
-  const [msg, setMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const submit = async () => {
-    if (!name || !email || !password) { setMsg('Fill all fields'); return; }
+    if (!name || !email || !password) { setToast({ type:'error', msg:'Fill all fields' }); return; }
+    setLoading(true);
     const res = await fetch(`${API}/employees`, {
       method:'POST',
       headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
       body: JSON.stringify({ name, email, password, role })
     });
     const data = await res.json();
+    setLoading(false);
     if (data.id) {
-      setMsg(`Added "${name}" successfully.`);
+      setToast({ type:'success', msg: `Added "${name}" successfully.` });
       setName(''); setEmail(''); setPassword('');
       onAdded();
     } else {
-      setMsg(data.error || 'Failed to add employee');
+      setToast({ type:'error', msg: data.error || 'Failed to add employee' });
     }
   };
 
   return (
-    <div style={{ background:'white', padding:14, borderRadius:8, marginBottom:16 }}>
-      <h3 style={{ marginTop:0 }}>Add Employee</h3>
-      <input placeholder="Name (must match Excel sheet name)" value={name} onChange={e=>setName(e.target.value)} style={{ marginLeft:0, marginBottom:6, width:260 }} /><br/>
-      <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} style={{ marginLeft:0, marginBottom:6, width:260 }} /><br/>
-      <input placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} style={{ marginLeft:0, marginBottom:6, width:260 }} /><br/>
-      <select value={role} onChange={e=>setRole(e.target.value)} style={{ marginLeft:0, marginBottom:6 }}>
-        <option value="employee">Employee</option>
-        <option value="manager">Manager</option>
-      </select><br/>
-      <button onClick={submit} style={{ marginLeft:0, marginTop:6 }}>Add Employee</button>
-      {msg && <div style={{ marginTop:8, color:'#555' }}>{msg}</div>}
+    <div className="section-card">
+      <div className="section-title">Add Employee</div>
+      <div className="form-grid">
+        <input placeholder="Name (must match Excel sheet name)" value={name} onChange={e=>setName(e.target.value)} />
+        <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
+        <input placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
+        <select value={role} onChange={e=>setRole(e.target.value)}>
+          <option value="employee">Employee</option>
+          <option value="manager">Manager</option>
+        </select>
+      </div>
+      <button className="btn btn-accent" onClick={submit} disabled={loading}>
+        {loading && <Spinner dark />} Add Employee
+      </button>
+      {toast && <div className={`toast ${toast.type}`}>{toast.msg}</div>}
+    </div>
+  );
+}
+
+function UploadWorkbook({ token, onUploaded }) {
+  const [file, setFile] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const upload = async () => {
+    if (!file) return;
+    setLoading(true);
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${API}/upload`, { method:'POST', headers:{ Authorization:`Bearer ${token}` }, body: form });
+    const data = await res.json();
+    setResult(data);
+    setLoading(false);
+    onUploaded();
+  };
+
+  return (
+    <div className="section-card">
+      <div className="section-title">Upload Leads Workbook</div>
+      <div className="file-row">
+        <input type="file" accept=".xlsx,.xls" onChange={e=>setFile(e.target.files[0])} />
+        <button className="btn btn-accent" onClick={upload} disabled={loading || !file}>
+          {loading && <Spinner dark />} {loading ? 'Uploading…' : 'Upload Workbook'}
+        </button>
+      </div>
+      {result && (
+        <div className="upload-summary">
+          {result.summary?.map((s, i) => (
+            <div key={i} className="upload-row">
+              <span>Sheet "{s.sheet}"</span>
+              {s.employee ? <span className="ok">{s.leadsAdded} leads → {s.employee}</span> : <span className="warn">no matching employee</span>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function ManagerDashboard({ user, token }) {
-  const [file, setFile] = useState(null);
-  const [result, setResult] = useState(null);
   const [allLeads, setAllLeads] = useState([]);
-  const fetchAll = () => fetch(`${API}/leads/all`, { headers:{ Authorization:`Bearer ${token}` }})
-    .then(r=>r.json()).then(setAllLeads);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAll = () => {
+    fetch(`${API}/leads/all`, { headers:{ Authorization:`Bearer ${token}` }})
+      .then(r=>r.json()).then(data => { setAllLeads(Array.isArray(data) ? data : []); setLoading(false); });
+  };
   useEffect(fetchAll, []);
 
-  const upload = async () => {
-    const form = new FormData();
-    form.append('file', file);
-    const res = await fetch(`${API}/upload`, { method:'POST', headers:{ Authorization:`Bearer ${token}` }, body: form });
-    setResult(await res.json());
-    fetchAll();
-  };
+  const byEmployee = useMemo(() => {
+    const map = {};
+    allLeads.forEach(l => {
+      if (!map[l.employee_name]) map[l.employee_name] = { total: 0, called: 0 };
+      map[l.employee_name].total++;
+      if (l.status !== 'not_called') map[l.employee_name].called++;
+    });
+    return map;
+  }, [allLeads]);
+
+  if (loading) return <div className="page-loading"><Spinner dark /><div>Loading dashboard…</div></div>;
 
   return (
     <div className="container">
-      <h2>Manager Dashboard</h2>
-
-      <AddEmployeeForm token={token} onAdded={fetchAll} />
-
-      <div style={{ background:'white', padding:14, borderRadius:8, marginBottom:16 }}>
-        <h3 style={{ marginTop:0 }}>Upload Leads Workbook</h3>
-        <input type="file" onChange={e=>setFile(e.target.files[0])} />
-        <button onClick={upload}>Upload Workbook</button>
-        {result && <pre>{JSON.stringify(result.summary, null, 2)}</pre>}
+      <div className="greeting-row">
+        <div className="greeting">
+          <h1>Manager Dashboard</h1>
+          <p>Welcome, {user.name}</p>
+        </div>
       </div>
 
-      <h3>All Leads ({allLeads.length})</h3>
-      {allLeads.map(l => (
-        <div key={l.id} className="lead-card">
-          <div><b>{l.employee_name}</b> — {l.customer_name} — {l.phone_number}</div>
-          <div className={l.status}>{l.status}</div>
-        </div>
-      ))}
+      <StatCards leads={allLeads} />
+
+      <AddEmployeeForm token={token} onAdded={fetchAll} />
+      <UploadWorkbook token={token} onUploaded={fetchAll} />
+
+      <div className="section-card">
+        <div className="section-title">Team Progress</div>
+        {Object.keys(byEmployee).length === 0 ? (
+          <div className="empty-state"><div className="emoji">👥</div><div>No leads assigned yet.</div></div>
+        ) : (
+          <>
+            <div className="emp-table-row emp-table-header">
+              <div>Employee</div><div>Progress</div><div>Called</div>
+            </div>
+            {Object.entries(byEmployee).map(([name, d]) => (
+              <div key={name} className="emp-table-row">
+                <div>{name}</div>
+                <div style={{ background:'#E4E6EE', borderRadius:20, height:8, overflow:'hidden' }}>
+                  <div style={{ width:`${Math.round((d.called/d.total)*100)}%`, background:'#0E9E88', height:'100%' }}></div>
+                </div>
+                <div>{d.called} / {d.total}</div>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+
+      <div className="section-card">
+        <div className="section-title">All Leads <span className="count-pill">{allLeads.length}</span></div>
+        {allLeads.length === 0 ? (
+          <div className="empty-state"><div className="emoji">📭</div><div>No leads uploaded yet.</div></div>
+        ) : allLeads.slice(0, 100).map(l => (
+          <div key={l.id} className="lead-card">
+            <div className="lead-top">
+              <div>
+                <b>{l.employee_name}</b>
+                {l.customer_name && <span style={{ color:'var(--text-muted)' }}> — {l.customer_name}</span>}
+                <div style={{ fontSize:13, color:'var(--text-muted)', marginTop:2 }}>
+                  {l.phone_number === 'TO_BE_FETCHED' ? '⏳ Number pending' : l.phone_number}
+                </div>
+              </div>
+              <span className={`status-badge ${l.status}`}>{STATUS_META[l.status]?.label || l.status}</span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function App() {
-  const [session, setSession] = useState(null);
-  if (!session) return <Login onLogin={setSession} />;
-  return session.role === 'manager'
-    ? <ManagerDashboard user={session} token={session.token} />
-    : <EmployeeDashboard user={session} token={session.token} />;
+  const [session, setSession] = useState(() => {
+    try { const s = window.__leadCallerSession; return s || null; } catch { return null; }
+  });
+
+  const handleLogin = (data) => {
+    window.__leadCallerSession = data;
+    setSession(data);
+  };
+  const handleLogout = () => {
+    window.__leadCallerSession = null;
+    setSession(null);
+  };
+
+  if (!session) return <Login onLogin={handleLogin} />;
+
+  return (
+    <React.Fragment>
+      <TopBar user={session} onLogout={handleLogout} />
+      {session.role === 'manager'
+        ? <ManagerDashboard user={session} token={session.token} />
+        : <EmployeeDashboard user={session} token={session.token} />}
+    </React.Fragment>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
