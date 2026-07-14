@@ -196,6 +196,24 @@
   .emp-table-row:nth-child(even) { background: var(--bg); }
   .emp-table-header { font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); font-weight: 700; padding: 0 12px 6px; }
 
+  /* ---------- Layout with sidebar ---------- */
+  .layout { display: flex; max-width: 1280px; margin: 0 auto; align-items: flex-start; gap: 20px; padding: 20px 16px 60px; }
+  .layout .container { padding: 0; margin: 0; flex: 1; max-width: none; }
+  .sidebar {
+    width: 260px; flex-shrink: 0; background: var(--surface); border-radius: 14px; padding: 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05); position: sticky; top: 78px;
+  }
+  .sidebar-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .doc-item { padding: 10px; border-radius: 9px; margin-bottom: 8px; background: var(--bg); }
+  .doc-name { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .doc-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; display: flex; justify-content: space-between; }
+  .doc-empty { font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 20px 0; }
+
+  @media (max-width: 900px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; position: static; }
+  }
+
   @media (max-width: 640px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .form-grid { grid-template-columns: 1fr; }
@@ -504,13 +522,49 @@ function UploadWorkbook({ token, onUploaded }) {
   );
 }
 
+function DocumentsSidebar({ token, refreshKey }) {
+  const [docs, setDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API}/uploads`, { headers:{ Authorization:`Bearer ${token}` }})
+      .then(r=>r.json()).then(data => { setDocs(Array.isArray(data) ? data : []); setLoading(false); });
+  }, [refreshKey]);
+
+  const formatDate = (d) => {
+    try { return new Date(d + 'Z').toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }); }
+    catch { return d; }
+  };
+
+  return (
+    <div className="sidebar">
+      <div className="sidebar-title">📁 Uploaded Documents</div>
+      {loading ? (
+        <div style={{ display:'flex', justifyContent:'center', padding:'20px 0' }}><Spinner dark /></div>
+      ) : docs.length === 0 ? (
+        <div className="doc-empty">No workbooks uploaded yet.</div>
+      ) : docs.map(d => (
+        <div key={d.id} className="doc-item">
+          <div className="doc-name">{d.filename}</div>
+          <div className="doc-meta">
+            <span>{d.lead_count} leads</span>
+            <span>{formatDate(d.uploaded_at)}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ManagerDashboard({ user, token }) {
   const [allLeads, setAllLeads] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const fetchAll = () => {
     fetch(`${API}/leads/all`, { headers:{ Authorization:`Bearer ${token}` }})
       .then(r=>r.json()).then(data => { setAllLeads(Array.isArray(data) ? data : []); setLoading(false); });
+    setRefreshKey(k => k + 1);
   };
   useEffect(fetchAll, []);
 
@@ -527,75 +581,81 @@ function ManagerDashboard({ user, token }) {
   if (loading) return <div className="page-loading"><Spinner dark /><div>Loading dashboard…</div></div>;
 
   return (
-    <div className="container">
-      <div className="greeting-row">
-        <div className="greeting">
-          <h1>Manager Dashboard</h1>
-          <p>Welcome, {user.name}</p>
+    <div className="layout">
+      <div className="container">
+        <div className="greeting-row">
+          <div className="greeting">
+            <h1>Manager Dashboard</h1>
+            <p>Welcome, {user.name}</p>
+          </div>
+        </div>
+
+        <StatCards leads={allLeads} />
+
+        <AddEmployeeForm token={token} onAdded={fetchAll} />
+        <UploadWorkbook token={token} onUploaded={fetchAll} />
+
+        <div className="section-card">
+          <div className="section-title">Team Progress</div>
+          {Object.keys(byEmployee).length === 0 ? (
+            <div className="empty-state"><div className="emoji">👥</div><div>No leads assigned yet.</div></div>
+          ) : (
+            <>
+              <div className="emp-table-row emp-table-header">
+                <div>Employee</div><div>Progress</div><div>Called</div>
+              </div>
+              {Object.entries(byEmployee).map(([name, d]) => (
+                <div key={name} className="emp-table-row">
+                  <div>{name}</div>
+                  <div style={{ background:'#E4E6EE', borderRadius:20, height:8, overflow:'hidden' }}>
+                    <div style={{ width:`${Math.round((d.called/d.total)*100)}%`, background:'#0E9E88', height:'100%' }}></div>
+                  </div>
+                  <div>{d.called} / {d.total}</div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+
+        <div className="section-card">
+          <div className="section-title">All Leads <span className="count-pill">{allLeads.length}</span></div>
+          {allLeads.length === 0 ? (
+            <div className="empty-state"><div className="emoji">📭</div><div>No leads uploaded yet.</div></div>
+          ) : allLeads.slice(0, 100).map(l => (
+            <div key={l.id} className="lead-card">
+              <div className="lead-top">
+                <div>
+                  <b>{l.employee_name}</b>
+                  {l.customer_name && <span style={{ color:'var(--text-muted)' }}> — {l.customer_name}</span>}
+                  <div style={{ fontSize:13, color:'var(--text-muted)', marginTop:2 }}>
+                    {l.phone_number === 'TO_BE_FETCHED' ? '⏳ Number pending' : l.phone_number}
+                  </div>
+                </div>
+                <span className={`status-badge ${l.status}`}>{STATUS_META[l.status]?.label || l.status}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-
-      <StatCards leads={allLeads} />
-
-      <AddEmployeeForm token={token} onAdded={fetchAll} />
-      <UploadWorkbook token={token} onUploaded={fetchAll} />
-
-      <div className="section-card">
-        <div className="section-title">Team Progress</div>
-        {Object.keys(byEmployee).length === 0 ? (
-          <div className="empty-state"><div className="emoji">👥</div><div>No leads assigned yet.</div></div>
-        ) : (
-          <>
-            <div className="emp-table-row emp-table-header">
-              <div>Employee</div><div>Progress</div><div>Called</div>
-            </div>
-            {Object.entries(byEmployee).map(([name, d]) => (
-              <div key={name} className="emp-table-row">
-                <div>{name}</div>
-                <div style={{ background:'#E4E6EE', borderRadius:20, height:8, overflow:'hidden' }}>
-                  <div style={{ width:`${Math.round((d.called/d.total)*100)}%`, background:'#0E9E88', height:'100%' }}></div>
-                </div>
-                <div>{d.called} / {d.total}</div>
-              </div>
-            ))}
-          </>
-        )}
-      </div>
-
-      <div className="section-card">
-        <div className="section-title">All Leads <span className="count-pill">{allLeads.length}</span></div>
-        {allLeads.length === 0 ? (
-          <div className="empty-state"><div className="emoji">📭</div><div>No leads uploaded yet.</div></div>
-        ) : allLeads.slice(0, 100).map(l => (
-          <div key={l.id} className="lead-card">
-            <div className="lead-top">
-              <div>
-                <b>{l.employee_name}</b>
-                {l.customer_name && <span style={{ color:'var(--text-muted)' }}> — {l.customer_name}</span>}
-                <div style={{ fontSize:13, color:'var(--text-muted)', marginTop:2 }}>
-                  {l.phone_number === 'TO_BE_FETCHED' ? '⏳ Number pending' : l.phone_number}
-                </div>
-              </div>
-              <span className={`status-badge ${l.status}`}>{STATUS_META[l.status]?.label || l.status}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+      <DocumentsSidebar token={token} refreshKey={refreshKey} />
     </div>
   );
 }
 
 function App() {
   const [session, setSession] = useState(() => {
-    try { const s = window.__leadCallerSession; return s || null; } catch { return null; }
+    try {
+      const raw = localStorage.getItem('leadCallerSession');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
   });
 
   const handleLogin = (data) => {
-    window.__leadCallerSession = data;
+    localStorage.setItem('leadCallerSession', JSON.stringify(data));
     setSession(data);
   };
   const handleLogout = () => {
-    window.__leadCallerSession = null;
+    localStorage.removeItem('leadCallerSession');
     setSession(null);
   };
 

@@ -134,6 +134,20 @@ app.post('/api/employees', authMiddleware, async (req, res) => {
   }
 });
 
+// --- Manager: list uploaded workbooks/batches ---
+app.get('/api/uploads', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'manager') return res.status(403).json({ error: 'Managers only' });
+  const result = await db.execute(`
+    SELECT upload_batches.id, upload_batches.filename, upload_batches.uploaded_at,
+           COUNT(leads.id) as lead_count
+    FROM upload_batches
+    LEFT JOIN leads ON leads.batch_id = upload_batches.id
+    GROUP BY upload_batches.id
+    ORDER BY upload_batches.uploaded_at DESC
+  `);
+  res.json(result.rows);
+});
+
 // --- One-time setup: create the first manager account remotely ---
 // Protected by a SETUP_KEY env var so randoms can't call it. Delete this route
 // (or unset SETUP_KEY) after you've created your manager account.
